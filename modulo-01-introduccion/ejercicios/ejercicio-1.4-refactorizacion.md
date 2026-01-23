@@ -1,59 +1,91 @@
-# Refactoring to Best Practices with AI
+# Refactoring Exercise with AI
 
-Refactoring is a crucial aspect of software development, aiming to improve the structure of existing code without changing its external behavior. In this document, we will explore refactoring in the context of a monolithic REST API and examine common code smells, followed by an example of a Python class that violates SOLID principles.
+## Overview
+This exercise focuses on the refactoring of a monolithic REST API case built using Node.js and Express, which has various code smells and vulnerabilities. The goal is to apply clean architecture and SOLID principles to enhance the security and maintainability of the code.
 
-## Monolithic REST API Example
+## Monolithic REST API Case
+### Issues Identified:
+1. **SQL Injection Vulnerability**: The API currently constructs SQL queries using untrusted input, making it vulnerable to SQL injection attacks.
 
-Consider a simple monolithic REST API for managing books. The current implementation has several code smells:
+2. **Lack of Separation of Concerns**: Business logic is intertwined with presentation logic, making it hard to maintain and test.
 
-1. **Long Method**: The method handling book creation is excessively long, making it difficult to understand and maintain.
-2. **Duplicate Code**: Logic for validation is repeated in multiple places, leading to inconsistency and potential errors.
-3. **Feature Envy**: A function in the API frequently accesses the internals of another class to perform logic, breaking encapsulation.
-4. **Data Clumps**: Grouping of data items that are always found together. For instance, user metadata is passed as multiple fields rather than encapsulated in a customer object.
+3. **Hardcoded Configuration**: Configuration values are hardcoded into the application, reducing flexibility and security.
 
-### Example of Code Smells
+4. **Inline Validation**: Input validation is done inline, which is not reusable and clutters the codebase.
+
+5. **Mixed Business Logic with Presentation Layer**: The routes directly handle business logic, making the API difficult to extend.
+
+### Example Vulnerable Code:
+```javascript
+app.post('/users', (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+    const sql = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+    db.query(sql, (err, results) => {
+        if (err) throw err;
+        res.json(results);
+    });
+});
+```
+
+### Python Class Violating SOLID Principles:
 ```python
-class BookAPI:
-    def create_book(self, title, author, publish_date, genre):
-        # Validate inputs
-        if not title or not author:
-            raise ValueError("Title and author are required")
-        if publish_date > datetime.now():
-            raise ValueError("Publish date cannot be in the future")
+class SalesReport:
+    def generate_report(self):
+        # Generates report including business logic here
+        pass
 
-        # Logic to save book in the database
-        # Repeated logic for validation here
-        # Data clumps are present in parameters
-        # Duplicate code for similar actions
+    def format_report(self):
+        # Formatting logic intermingled
         pass
 ```
 
-## Python Class Violating SOLID Principles
+## Refactoring Goals
+- Apply **Clean Architecture** to separate layers distinctly.
+- Implement **SOLID Principles** to enhance code structure and maintainability.
+- Use **Security Best Practices** such as parameterized queries to prevent SQL injection.
+- Utilize **Environment Variables** for configuration management.
+- Implement centralized **Error Handling**.
+- Use **Validation Middleware** for input validation.
+- Ensure proper **Logging** for monitoring and debugging.
+- Introduce **Testing** to validate the functionality and security of the application.
 
-### Example: `BookManager`
-The following class violates the **Single Responsibility Principle** (SRP), among other SOLID principles:
-```python
-class BookManager:
-    def add_book(self, title, author):
-        # Adding a book
-        pass
+### Refactored Code Snippet (Node.js)
+```javascript
+// Using environment variables
+const express = require('express');
+const app = express();
+const db = require('./db');
+const { check, validationResult } = require('express-validator');
 
-    def send_notification(self, user_email):
-        # Sending email notification
-        pass
-
-    def calculate_late_fees(self, overdue_days):
-        # Logic for calculating late fees
-        pass
+app.post('/users', [
+    check('username').notEmpty().withMessage('Username is required'),
+    check('password').notEmpty().withMessage('Password is required')
+], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    const { username, password } = req.body;
+    db.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, results) => {
+        if (err) return res.status(500).send('Database error');
+        res.json(results);
+    });
+});
 ```
 
-### Refactoring Steps
-1. **Extract Classes**: Separate concerns into different classes (e.g., `BookAdder`, `Notifier`, `FeeCalculator`).
-2. **Remove Duplicated Logic**: Create a validation utility that can be reused instead of having duplicate code for validation throughout the application.
-3. **Encapsulate Data**: Instead of passing multiple parameters, encapsulate related data into objects.
+### Refactored Python Class:
+```python
+class SalesReport:
+    def __init__(self, data):
+        self.data = data
 
-By following these steps and adhering to best practices, we can refactor our API to be more maintainable, clearer, and easier to understand.
+    def generate_report(self):
+        # Business logic separated from formatting
+        pass
 
----
-
-This document serves as a foundational guide for refactoring practices using AI assistance and aims to empower developers to ensure their code is robust and maintainable.
+class ReportFormatter:
+    def format(self, report):
+        # Formatting logic handled separately
+        pass
+```
