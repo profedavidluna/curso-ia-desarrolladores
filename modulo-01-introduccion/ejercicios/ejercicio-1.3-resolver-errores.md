@@ -1,84 +1,79 @@
 # Resolving Complicated Errors with AI
 
-## Objectives
-- Understand how AI can assist in resolving complicated errors.
-- Learn about memory leaks and race conditions as common problems in programming.
+---
 
-## Context
-Complicated errors in software development can lead to significant downtime and performance bottlenecks. This exercise explores two specific cases: Memory Leaks in Node.js and Race Conditions in Python.
+## Objectives:
+1. Understand and diagnose complex errors in applications.
+2. Learn how to leverage AI tools to aid in debugging.
+3. Gain experience in identifying specific types of errors, such as memory leaks and race conditions.
 
-## Problematic Code Examples
+## Context:
+In software development, encountering complicated errors is common. These errors can lead to significant performance issues and may be difficult to resolve without a systematic approach. AI tools can assist developers in minimizing the time spent on debugging.
 
-### Memory Leak Case: Node.js with CacheManager Class
-```javascript
-class CacheManager {
-    constructor() {
-        this.cache = {};
-    }
+## Case 1: Memory Leak in Node.js Cache Manager
 
-    addToCache(key, value) {
-        this.cache[key] = value;
-    }
+- **Problematic Code:**
+  ```javascript
+  const cache = {};
 
-    getFromCache(key) {
-        return this.cache[key];
-    }
-}
+  function fetchData(key) {
+      if (cache[key]) {
+          return cache[key];
+      }
+      const data = performExpensiveOperation(key);
+      cache[key] = data; // Memory leak occurs if cache grows indefinitely
+      return data;
+  }
+  ```
 
-const cacheManager = new CacheManager();
-for(let i = 0; i < 100000; i++) {
-    cacheManager.addToCache(`key${i}`, `value${i}`);
-}
-```
+- **Mission Instructions:**
+  1. Identify where the memory leak occurs in the `fetchData` function.
+  2. Propose a solution to limit the growth of the `cache` object.
 
-In this example, the CacheManager class keeps all entries in memory without any mechanism to evict old data. This can lead to a memory leak if the cache grows indefinitely.
+- **Hints for Using Copilot:**
+  - Prompt Copilot to suggest optimization strategies for cache management.
+  - Use queries like "How to limit memory usage in a caching mechanism?" to receive targeted assistance.
 
-### Race Condition Case: Python with InventoryManager Class
-```python
-import threading
+- **Success Criteria:**
+  - The refactored code should not allow the cache to grow indefinitely.
+  - Implement a strategy to evict old entries.
 
-class InventoryManager:
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.inventory = 0
+- **Reflection Questions:**
+  1. What are the trade-offs of using in-memory caching?
+  2. How can one monitor memory usage effectively in Node.js applications?
 
-    def add_stock(self, quantity):
-        with self.lock:
-            current_stock = self.inventory
-            self.inventory = current_stock + quantity
+---
 
-    def get_stock(self):
-        return self.inventory
+## Case 2: Race Condition in Python Inventory Manager
 
-inventory_manager = InventoryManager()
-threads = [threading.Thread(target=inventory_manager.add_stock, args=(10,)) for _ in range(100)]
-for thread in threads:
-    thread.start()
-for thread in threads:
-    thread.join()
-```
+- **Problematic Code:**
+  ```python
+  inventory = 0
 
-In this example, if multiple threads attempt to add stock simultaneously, without proper locking, it can lead to unexpected results and a race condition.
+  def update_inventory(amount):
+      global inventory
+      inventory += amount
 
-## Mission Instructions
-1. Analyze the provided code examples.
-2. Identify the issues that can lead to errors in each case.
-3. Use AI tools, such as GitHub Copilot, to suggest possible fixes or improvements for the code examples.
+  update_inventory(10)
+  update_inventory(-5)  # Possible race condition
+  ```
 
-## Hints for Using Copilot
-- Start writing the function name and key comments about the intended logic to get relevant suggestions from Copilot.
-- Review Copilot's suggestions carefully and test them in a local environment before implementing.
+- **Mission Instructions:**
+  1. Analyze the code and discuss the risks associated with concurrent inventory updates.
+  2. Suggest ways to synchronize access to the shared resource.
 
-## Success Criteria
-- Successfully recognize and explain the issues of the code examples.
-- Employ AI suggestions to modify the code appropriately to handle the errors.
+- **Hints for Using Copilot:**
+  - Ask Copilot to generate examples of mutex or lock implementations in Python.
+  - Search for best practices in concurrency control in your prompt.
 
-## Reflection Questions
-1. How did AI assist you in identifying the problems in the code?
-2. What changes did you implement based on the suggestions received?
-3. What unexpected insights did you gain from using AI tools?
+- **Success Criteria:**
+  - The inventory should accurately reflect total changes without data corruption, regardless of concurrent access.
 
-## Additional Resources
-- [Memory Leak Detection in Node.js](https://nodejs.org/en/docs/guides/)
-- [Concurrency in Python: A Historical Perspective](https://realpython.com/python-concurrency/)  
-- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
+- **Reflection Questions:**
+  1. How does the choice of data structures affect concurrency?
+  2. What tools can help visualize race conditions in Python applications?
+
+## Additional Resources:
+- Documentation for Node.js memory management.
+- Python concurrency documentation.
+- AI tools for code analysis and debugging.
